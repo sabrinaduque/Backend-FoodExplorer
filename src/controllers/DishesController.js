@@ -41,6 +41,51 @@ class DishesController {
     response.json()
   }
 
+  async update(request, response) {
+    const { title, description, ingredients, price, category } = request.body
+    const { id } = request.params;
+
+    const dish = await knex("dishes").where({ id }).first()
+
+    if (dish.title !== title) {
+      const checkDishAlreadyExists = await knex("dishes").where({ title }).first();
+      if (checkDishAlreadyExists) {
+        throw new AppError("Este prato já existe no cardápio!")
+      }
+    }
+
+    dish.title = title ?? dish.title;
+    dish.description = description ?? dish.description;
+    dish.category = category ?? dish.category;
+    dish.price = price ?? dish.price;
+
+    await knex("dishes").where({ id }).update(dish);
+
+    const hasOnlyOneIngredient = typeof (ingredients) === "string";
+
+    let dishIngredient
+
+    if (hasOnlyOneIngredient) {
+      dishIngredient = {
+        name: ingredients,
+        dish_id: dish.id
+      }
+    } else if (ingredients.length > 1) {
+      dishIngredient = ingredients.map(name => {
+        return {
+          name: ingredients,
+          dish_id: dish.id
+        }
+      });
+    }
+
+    await knex("ingredients").where({ dish_id: id }).delete()
+    await knex("ingredients").where({ dish_id: id }).insert(dishIngredient)
+
+    response.json()
+
+  }
+
   async show(request, response) {
     const { id } = request.params
 
