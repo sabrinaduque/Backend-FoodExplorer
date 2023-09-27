@@ -2,9 +2,10 @@ const { Router } = require("express")
 
 const IngredientsController = require("../controllers/IngredientsController")
 
+const ingredientsController = new IngredientsController()
+
 const ingredientsRoutes = Router()
 
-const ingredientsController = new IngredientsController()
 
 ingredientsRoutes.get("/:dish_id", ingredientsController.index)
 
