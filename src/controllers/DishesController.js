@@ -4,7 +4,9 @@ const DiskStorage = require("../providers/DiskStorage")
 
 class DishesController {
   async create(request, response) {
-    const { title, description, ingredients, price, category } = JSON.parse(request.body.data)
+    const { title, description, ingredients, price, category } = JSON.parse(
+      request.body.data
+    )
 
     const checkDishAlreadyExists = await knex("dishes").where({ title }).first()
 
@@ -48,7 +50,8 @@ class DishesController {
   }
 
   async update(request, response) {
-    const { title, description, ingredients, price, category, image } = JSON.parse(request.body.data)
+    const { title, description, ingredients, price, category, image } =
+      JSON.parse(request.body.data)
     const { id } = request.params
 
     const dish = await knex("dishes").where({ id }).first()
@@ -127,33 +130,29 @@ class DishesController {
   }
 
   async index(request, response) {
-    const { title, ingredients } = request.query
+    const { title } = request.query
 
     let dishes
 
-    if (ingredients) {
-      const filterIngredients = ingredients
-        .split(",")
-        .map((ingredient) => ingredient.trim())
-
-      dishes = await knex("ingredients")
-        .select([
-          "dishes.id",
-          "dishes.title",
-          "dishes.description",
-          "dishes.category",
-          "dishes.price",
-        ])
-        .whereLike("dishes.title", `%${title}%`)
-        .whereIn("name", filterIngredients)
-        .innerJoin("dishes", "dishes.id", "ingredients.dish_id")
-        .groupBy("dishes.id")
-        .orderBy("dishes.title")
-    } else {
-      dishes = await knex("dishes")
-        .whereLike("title", `%${title}%`)
-        .orderBy("title")
-    }
+    dishes = await knex("ingredients")
+      .select([
+        "dishes.id",
+        "dishes.title",
+        "dishes.description",
+        "dishes.category",
+        "dishes.price",
+        "dishes.image",
+      ])
+      .innerJoin("dishes", "dishes.id", "ingredients.dish_id")
+      .where(function () {
+        this.where("dishes.title", "like", `%${title}%`).orWhere(
+          "ingredients.name",
+          "like",
+          `%${title}%`
+        )
+      })
+      .groupBy("dishes.id")
+      .orderBy("dishes.title")
 
     const dishesIngredient = await knex("ingredients")
     const dishWithIngredients = dishes.map((dish) => {
